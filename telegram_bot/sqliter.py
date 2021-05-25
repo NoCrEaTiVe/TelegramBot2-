@@ -91,7 +91,6 @@ class SQLighter:
     def add_usertwitteracc(self, user_id, username):
         user_twitter_acc = UserTwitterAcc(user_id, username)
         self.cursor.execute(user_twitter_acc.add_user_twiiter_acc())
-        print("I am here")
         self.connection.commit()
 
     def user_acc_exists(self, user_id, username):
@@ -116,6 +115,12 @@ class SQLighter:
         sql = "SELECT DISTINCT username from usertwitteracc"
         accs = [acc[0] for acc in self.cursor.execute(sql)]
         return accs
+    def delete_usertwitter_acc(self, user_id,acc):
+        user_twitter_acc = UserTwitterAcc(user_id,acc)
+        self.cursor.execute(user_twitter_acc.delete_user_twitter_acc())
+        self.connection.commit()
+
+
     def close(self):
         self.connection.close()
 

@@ -58,9 +58,6 @@ def scheduled():
     asyncio.run(main())
 
 
-p = Process(target=scheduled)
-
-
 async def send_to_telegram_bot(twitter_acc, text, date):
     users_ids = db.find_users_with_this_acc(twitter_acc)
     print(users_ids)
@@ -83,7 +80,13 @@ async def add_acc_to_acc_list(message: types.Message):
             if not db.user_acc_exists(message.from_user.id, username):
                 db.add_usertwitteracc(message.from_user.id, username)
                 text = "User Added " + username
-                from parser import create_headers,get_rules,delete_all_rules,set_rules
+                from parser import (
+                    create_headers,
+                    get_rules,
+                    delete_all_rules,
+                    set_rules,
+                )
+
                 bearer_token = config.BEARER_TOKEN
                 headers = create_headers(bearer_token)
                 rules = get_rules(headers, bearer_token)
@@ -114,15 +117,28 @@ async def add_acc_to_acc_list(message: types.Message):
             await message.answer(text)
         except:
             await message.answer("This chat name is invalid" + chat_name)
+    elif message.text.startswith("/del_acc_"):
+        acc = message.text[9:]
+        if db.user_acc_exists(message.from_user.id, acc):
+            db.delete_usertwitter_acc(message.from_user.id, acc)
+            from parser import (
+                create_headers,
+                get_rules,
+                delete_all_rules,
+                set_rules,
+            )
 
+            bearer_token = config.BEARER_TOKEN
+            headers = create_headers(bearer_token)
+            rules = get_rules(headers, bearer_token)
+            delete = delete_all_rules(headers, bearer_token, rules)
+            set = set_rules(headers, delete, bearer_token)
+            await message.answer(acc + " deleted from list")
     else:
         await message.answer("I do not understand your command")
 
 
-def main():
+if __name__ == "__main__":
+    p = Process(target=scheduled)
     p.start()
     executor.start_polling(dp, skip_updates=True)
-
-
-if __name__ == "__main__":
-    main()

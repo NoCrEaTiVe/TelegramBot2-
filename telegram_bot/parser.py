@@ -55,8 +55,8 @@ def set_rules(headers, delete, bearer_token):
     accs = db.all_twitter_accs()
     sample_rules = []
     for acc in accs:
-        sample_rules.append({"value":"from: "+acc})
-    
+        sample_rules.append({"value": "from: " + acc})
+
     payload = {"add": sample_rules}
     response = requests.post(
         "https://api.twitter.com/2/tweets/search/stream/rules",
@@ -116,7 +116,3 @@ async def main():
     delete = delete_all_rules(headers, bearer_token, rules)
     set = set_rules(headers, delete, bearer_token)
     await get_stream(headers, set, bearer_token)
-
-
-if __name__ == "__main__":
-    main()
