@@ -4,7 +4,7 @@ import os
 import json
 
 from requests.models import Response
-import config
+import TELEGRAMBOT2.config as config
 
 # To set your enviornment variables in your terminal run the following line:
 # export 'BEARER_TOKEN'='AAAAAAAAAAAAAAAAAAAAAOINPwEAAAAA7%2Bakn1LOAXEJh1S9eswS3yoiKwY%3DV4jhcNlzbmpHl3HFK0keLrLAwvwGnaxxeMeQfYJO2mUeRvQsFs'
@@ -100,7 +100,6 @@ async def get_stream(headers, set, bearer_token):
                         data["text"],
                         data["created_at"],
                     )
-                
 
         except:
             continue

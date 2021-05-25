@@ -1,6 +1,5 @@
 import logging
-import config
-import asyncio
+import TELEGRAMBOT2.config.config as config
 import requests
 
 from aiogram import Bot, Dispatcher, executor, types
