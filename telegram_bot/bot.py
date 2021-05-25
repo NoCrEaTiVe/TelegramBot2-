@@ -1,11 +1,12 @@
 import logging
-import TELEGRAMBOT2.config.config as config
-import requests
 
+import requests
+import sys
 from aiogram import Bot, Dispatcher, executor, types
 from sqliter import SQLighter
 from multiprocessing import Process
-
+import config
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 
