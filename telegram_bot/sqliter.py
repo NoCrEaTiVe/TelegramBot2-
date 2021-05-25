@@ -112,7 +112,10 @@ class SQLighter:
         )
         chat_id = [chat[0] for chat in self.cursor.execute(chat_ids)]
         return chat_id
-
+    def all_twitter_accs(self):
+        sql = "SELECT DISTINCT username from usertwitteracc"
+        accs = [acc[0] for acc in self.cursor.execute(sql)]
+        return accs
     def close(self):
         self.connection.close()
 

@@ -2,6 +2,8 @@ import logging
 
 import requests
 import sys
+
+from requests.api import delete
 from aiogram import Bot, Dispatcher, executor, types
 from sqliter import SQLighter
 from multiprocessing import Process
@@ -56,6 +58,9 @@ def scheduled():
     asyncio.run(main())
 
 
+p = Process(target=scheduled)
+
+
 async def send_to_telegram_bot(twitter_acc, text, date):
     users_ids = db.find_users_with_this_acc(twitter_acc)
     print(users_ids)
@@ -78,6 +83,12 @@ async def add_acc_to_acc_list(message: types.Message):
             if not db.user_acc_exists(message.from_user.id, username):
                 db.add_usertwitteracc(message.from_user.id, username)
                 text = "User Added " + username
+                from parser import create_headers,get_rules,delete_all_rules,set_rules
+                bearer_token = config.BEARER_TOKEN
+                headers = create_headers(bearer_token)
+                rules = get_rules(headers, bearer_token)
+                delete = delete_all_rules(headers, bearer_token, rules)
+                set = set_rules(headers, delete, bearer_token)
             else:
                 text = "User exists in your list"
         else:
@@ -108,8 +119,10 @@ async def add_acc_to_acc_list(message: types.Message):
         await message.answer("I do not understand your command")
 
 
-if __name__ == "__main__":
-    Process(target=scheduled).start()
+def main():
+    p.start()
     executor.start_polling(dp, skip_updates=True)
-    # loop = asyncio.get_event_loop()
-    # loop.create_task(scheduled())
+
+
+if __name__ == "__main__":
+    main()

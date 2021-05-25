@@ -49,11 +49,14 @@ def delete_all_rules(headers, bearer_token, rules):
 
 
 def set_rules(headers, delete, bearer_token):
-    sample_rules = [
-        {
-            "value": "from:DastanAkhmetke1",
-        },
-    ]
+    from sqliter import SQLighter
+
+    db = SQLighter("db.sql")
+    accs = db.all_twitter_accs()
+    sample_rules = []
+    for acc in accs:
+        sample_rules.append({"value":"from: "+acc})
+    
     payload = {"add": sample_rules}
     response = requests.post(
         "https://api.twitter.com/2/tweets/search/stream/rules",
@@ -108,7 +111,6 @@ async def get_stream(headers, set, bearer_token):
 
 async def main():
     bearer_token = config.BEARER_TOKEN
-    print(bearer_token)
     headers = create_headers(bearer_token)
     rules = get_rules(headers, bearer_token)
     delete = delete_all_rules(headers, bearer_token, rules)
