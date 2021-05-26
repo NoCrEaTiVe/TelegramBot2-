@@ -1,10 +1,8 @@
 import bot
 import requests
-import os
 import json
 import config
 
-from requests.models import Response
 
 
 # To set your enviornment variables in your terminal run the following line:
@@ -64,7 +62,7 @@ def add_rule(headers,acc):
 def set_rules(headers, delete, bearer_token):
     from sqliter import SQLighter
 
-    db = SQLighter("db.sql")
+    db = SQLighter()
     accs = db.all_twitter_accs()
     sample_rules = []
     for acc in accs:

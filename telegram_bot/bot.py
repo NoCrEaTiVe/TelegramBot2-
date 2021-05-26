@@ -1,9 +1,7 @@
 import logging
 
 import requests
-import sys
 
-from requests.api import delete
 from aiogram import Bot, Dispatcher, executor, types
 from sqliter import SQLighter
 from multiprocessing import Process
@@ -17,7 +15,7 @@ bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher(bot)
 
 
-db = SQLighter("db.sql")
+db = SQLighter()
 
 
 @dp.message_handler(commands=["subscribe"])

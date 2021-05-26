@@ -1,6 +1,7 @@
-import sqlite3
+import os
+import psycopg2
 
-import requests
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 
 class User:
@@ -8,13 +9,13 @@ class User:
         self.user_id = user_id
 
     def add_user(self):
-        return "INSERT INTO user VALUES (%s);" % (self.user_id)
+        return "INSERT INTO users VALUES (%s);" % (self.user_id)
 
     def delete_user(self):
-        return "DELETE from user where userid = (%s);" % (self.user_id)
+        return "DELETE from users where userid = (%s);" % (self.user_id)
 
     def check_user_exists(self):
-        return "SELECT EXISTS(SELECT 1 FROM user WHERE userid=%s);" % (self.user_id)
+        return "SELECT 1 FROM users WHERE userid=%s;" % (self.user_id)
 
 
 class UserChatId:
@@ -36,15 +37,15 @@ class UserChatId:
         )
 
     def check_chat_id(self):
-        return (
-            "SELECT EXISTS(SELECT 1 FROM UserChatId WHERE chat_id='%s' and user_id ='%s');"
-            % (self.chat_id, self.user_id)
+        return "SELECT 1 FROM UserChatId WHERE chat_id='%s' and user_id ='%s';" % (
+            self.chat_id,
+            self.user_id,
         )
 
 
 class SQLighter:
-    def __init__(self, database_file):
-        self.connection = sqlite3.connect(database_file)
+    def __init__(self):
+        self.connection = psycopg2.connect(DATABASE_URL, sslmode="require")
         self.cursor = self.connection.cursor()
 
     def add_user(self, userId):
@@ -62,8 +63,8 @@ class SQLighter:
 
     def check_chat_id_exists_in_user_list(self, userId, chatId):
         userChatId = UserChatId(userId, chatId)
-        checker = self.cursor.execute(userChatId.check_chat_id())
-        return bool(checker.fetchone()[0])
+        self.cursor.execute(userChatId.check_chat_id())
+        return bool(self.cursor.fetchone()[0])
 
     def delete_chat_id_from_user(self, userId, chatId):
         userChatId = UserChatId(userId, chatId)
@@ -72,15 +73,15 @@ class SQLighter:
 
     def check_user(self, userid):
         user = User(userid)
-        checker = self.cursor.execute(user.check_user_exists())
-        return bool(checker.fetchone()[0])
+        self.cursor.execute(user.check_user_exists())
+        return bool(self.cursor.fetchone()[0])
 
     def get_twiiter_acc(self, userid):
         usernames = (
             "SELECT DISTINCT username from usertwitteracc where userid = %s " % (userid)
         )
-        print(usernames)
-        usernames_list = [user[0] for user in self.cursor.execute(usernames)]
+        self.cursor.execute(usernames)
+        usernames_list = [user[0] for user in self.cursor]
         return usernames_list
 
     def delete_user(self, userid):
@@ -95,31 +96,37 @@ class SQLighter:
 
     def user_acc_exists(self, user_id, username):
         user_acc = UserTwitterAcc(user_id, username)
-        checker = self.cursor.execute(user_acc.check_user_twitter_acc_exists())
-        return bool(checker.fetchone()[0])
+        self.cursor.execute(user_acc.check_user_twitter_acc_exists())
+        
+        return bool(self.cursor.fetchone()[0])
+        
 
     def find_users_with_this_acc(self, username):
         user_id = "SELECT DISTINCT userid from usertwitteracc where username = '%s'" % (
             username
         )
-        users_id = [user[0] for user in self.cursor.execute(user_id)]
+        self.cursor.execute(user_id)
+        users_id = [user[0] for user in self.cursor]
         return users_id
 
     def find_user_chats(self, user_id):
         chat_ids = "SELECT DISTINCT chat_id from UserChatId where user_id = %s" % (
             user_id
         )
-        chat_id = [chat[0] for chat in self.cursor.execute(chat_ids)]
+        self.cursor.execute(chat_ids)
+        chat_id = [chat[0] for chat in self.cursor]
         return chat_id
+
     def all_twitter_accs(self):
         sql = "SELECT DISTINCT username from usertwitteracc"
-        accs = [acc[0] for acc in self.cursor.execute(sql)]
+        self.cursor.execute(sql)
+        accs = [acc[0] for acc in self.cursor]
         return accs
-    def delete_usertwitter_acc(self, user_id,acc):
-        user_twitter_acc = UserTwitterAcc(user_id,acc)
+
+    def delete_usertwitter_acc(self, user_id, acc):
+        user_twitter_acc = UserTwitterAcc(user_id, acc)
         self.cursor.execute(user_twitter_acc.delete_user_twitter_acc())
         self.connection.commit()
-
 
     def close(self):
         self.connection.close()
@@ -143,7 +150,7 @@ class UserTwitterAcc:
         )
 
     def check_user_twitter_acc_exists(self):
-        return (
-            "SELECT EXISTS(SELECT 1 FROM usertwitteracc WHERE userid = %s and username='%s');"
-            % (self.user_id, self.twitter_acc)
+        return "SELECT 1 FROM usertwitteracc WHERE userid = %s and username='%s');" % (
+            self.user_id,
+            self.twitter_acc,
         )
