@@ -80,18 +80,9 @@ async def add_acc_to_acc_list(message: types.Message):
             if not db.user_acc_exists(message.from_user.id, username):
                 db.add_usertwitteracc(message.from_user.id, username)
                 text = "User Added " + username
-                from parser import (
-                    create_headers,
-                    get_rules,
-                    delete_all_rules,
-                    set_rules,
-                )
-
                 bearer_token = config.BEARER_TOKEN
-                headers = create_headers(bearer_token)
-                rules = get_rules(headers, bearer_token)
-                delete = delete_all_rules(headers, bearer_token, rules)
-                set = set_rules(headers, delete, bearer_token)
+                headers = parser.create_headers(bearer_token)
+                parser.add_rule(headers, username)
             else:
                 text = "User exists in your list"
         else:
@@ -121,18 +112,11 @@ async def add_acc_to_acc_list(message: types.Message):
         acc = message.text[9:]
         if db.user_acc_exists(message.from_user.id, acc):
             db.delete_usertwitter_acc(message.from_user.id, acc)
-            from parser import (
-                create_headers,
-                get_rules,
-                delete_all_rules,
-                set_rules,
-            )
-
             bearer_token = config.BEARER_TOKEN
-            headers = create_headers(bearer_token)
-            rules = get_rules(headers, bearer_token)
-            delete = delete_all_rules(headers, bearer_token, rules)
-            set = set_rules(headers, delete, bearer_token)
+            headers = parser.create_headers(bearer_token)
+            rules = parser.get_rules(headers, bearer_token)
+            delete = parser.delete_all_rules(headers, bearer_token, rules)
+            parser.set_rules(headers, delete, bearer_token)
             await message.answer(acc + " deleted from list")
     else:
         await message.answer("I do not understand your command")

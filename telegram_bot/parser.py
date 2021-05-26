@@ -47,6 +47,19 @@ def delete_all_rules(headers, bearer_token, rules):
         )
     print(json.dumps(response.json()))
 
+def add_rule(headers,acc):
+    payload = {"add": [{"value":"from: " + acc }]}
+    response = requests.post(
+        "https://api.twitter.com/2/tweets/search/stream/rules",
+        headers=headers,
+        json=payload,
+    )
+    if response.status_code != 201:
+        raise Exception(
+            "Cannot add rules (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    print(json.dumps(response.json()))
+
 
 def set_rules(headers, delete, bearer_token):
     from sqliter import SQLighter
