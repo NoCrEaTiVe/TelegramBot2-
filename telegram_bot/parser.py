@@ -112,12 +112,12 @@ async def get_stream(headers, set, bearer_token):
                     data = json_response["data"]
                     username = json_response["includes"]["users"][0]["username"]
                     link_to_acc = "https://twitter.com/" + username
+                    user_name_text="<a href='{}'>{}</a>".format(link_to_acc,username),
                     link_to_tweet = "https://twitter.com/i/web/status/" + data["id"]
                     await bot.send_to_telegram_bot(
-                        username,
+                        user_name_text,
                         data["text"],
                         data["created_at"],
-                        link_to_acc,
                         link_to_tweet,
                     )
 

@@ -56,22 +56,25 @@ def scheduled():
     asyncio.run(main())
 
 
-async def send_to_telegram_bot(twitter_acc, text, date, link_to_acc, link_to_tweet):
+async def send_to_telegram_bot(twitter_acc, text, date, link_to_tweet):
     users_ids = db.find_users_with_this_acc(twitter_acc)
     text = (
         twitter_acc
-        + " on Twitter({})\n".format(link_to_acc)
+        + " on Twitter\n"
+        + "Text: \n"
         + text
         + "\n"
-        + "date: "
+        + "Date: \n"
         + date
         + "\n"
-        + "link: {}".format(link_to_tweet)
+        + "Link to tweet: \n"
+        + link_to_tweet
     )
+
     for user_id in users_ids:
         chats = db.find_user_chats(user_id)
         for chat_id in chats:
-            await bot.send_message(chat_id, text)
+            await bot.send_message(chat_id, text, parse_mode="html")
 
 
 @dp.message_handler()
