@@ -7,14 +7,13 @@ from sqliter import SQLighter
 from multiprocessing import Process
 import config
 import asyncio
+from task import Stream
 
 logging.basicConfig(level=logging.INFO)
 
 
 bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher(bot)
-
-
 db = SQLighter()
 
 
@@ -40,7 +39,6 @@ async def unsubscribe(message: types.Message):
 async def get_acc(message: types.Message):
     if db.check_user(message.from_user.id):
         users = db.get_twiiter_acc(message.from_user.id)
-        print(users)
         users = "\n".join(users)
         if users.strip() == "":
             await message.answer("You have not users")
@@ -50,14 +48,8 @@ async def get_acc(message: types.Message):
         await message.answer("You unsubscribed")
 
 
-def scheduled():
-    from parser import main
-
-    asyncio.run(main())
-
-
-async def send_to_telegram_bot(twitter_acc, text, date, link_to_tweet):
-    users_ids = db.find_users_with_this_acc(twitter_acc)
+async def send_to_telegram_bot(username,twitter_acc, text, date, link_to_tweet):
+    users_ids = db.find_users_with_this_acc(username)
     text = (
         twitter_acc
         + " on Twitter\n"
@@ -70,7 +62,6 @@ async def send_to_telegram_bot(twitter_acc, text, date, link_to_tweet):
         + "Link to tweet: \n"
         + link_to_tweet
     )
-
     for user_id in users_ids:
         chats = db.find_user_chats(user_id)
         for chat_id in chats:
@@ -79,18 +70,15 @@ async def send_to_telegram_bot(twitter_acc, text, date, link_to_tweet):
 
 @dp.message_handler()
 async def add_acc_to_acc_list(message: types.Message):
-    import parser
-
+    stream = Stream(config.BEARER_TOKEN)
     text = "Error"
     if message.text.startswith("/add_twitter_acc_"):
         username = message.text[17:].strip()
-        if parser.check_user_exists(username):
+        if stream.check_user_exists(username):
             if not db.user_acc_exists(message.from_user.id, username):
                 db.add_usertwitteracc(message.from_user.id, username)
                 text = "User Added " + username
-                bearer_token = config.BEARER_TOKEN
-                headers = parser.create_headers(bearer_token)
-                parser.add_rule(headers, username)
+                stream.add_rule(username)
             else:
                 text = "User exists in your list"
         else:
@@ -120,9 +108,18 @@ async def add_acc_to_acc_list(message: types.Message):
         acc = message.text[9:]
         if db.user_acc_exists(message.from_user.id, acc):
             db.delete_usertwitter_acc(message.from_user.id, acc)
-    
+            rules = stream.get_rules()
+            stream.delete_all_rules(rules)
+            stream.set_rules()
+
     else:
         await message.answer("I do not understand your command")
+
+
+def scheduled():
+    from task import main
+
+    main()
 
 
 if __name__ == "__main__":

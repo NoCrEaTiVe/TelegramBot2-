@@ -24,7 +24,6 @@ class UserChatId:
         self.user_id = user_id
 
     def add_chat_id(self):
-        print("Hereee")
         return "INSERT INTO UserChatId (chat_id, user_id) VALUES (%s,%s);" % (
             self.chat_id,
             self.user_id,
@@ -97,9 +96,8 @@ class SQLighter:
     def user_acc_exists(self, user_id, username):
         user_acc = UserTwitterAcc(user_id, username)
         self.cursor.execute(user_acc.check_user_twitter_acc_exists())
-        
+
         return bool(self.cursor.fetchone())
-        
 
     def find_users_with_this_acc(self, username):
         user_id = "SELECT DISTINCT userid from usertwitteracc where username = '%s'" % (
