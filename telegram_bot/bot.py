@@ -120,12 +120,7 @@ async def add_acc_to_acc_list(message: types.Message):
         acc = message.text[9:]
         if db.user_acc_exists(message.from_user.id, acc):
             db.delete_usertwitter_acc(message.from_user.id, acc)
-            bearer_token = config.BEARER_TOKEN
-            headers = parser.create_headers(bearer_token)
-            rules = parser.get_rules(headers, bearer_token)
-            delete = parser.delete_all_rules(headers, bearer_token, rules)
-            parser.set_rules(headers, delete, bearer_token)
-            await message.answer(acc + " deleted from list")
+    
     else:
         await message.answer("I do not understand your command")
 
