@@ -56,13 +56,20 @@ def scheduled():
     asyncio.run(main())
 
 
-async def send_to_telegram_bot(twitter_acc, text, date):
+async def send_to_telegram_bot(twitter_acc, text, date, link_to_acc, link_to_tweet):
     users_ids = db.find_users_with_this_acc(twitter_acc)
-    print(users_ids)
-    text = twitter_acc + " on Twitter \n" + text + "\n" + "date: " + date
+    text = (
+        twitter_acc
+        + " on Twitter({})\n".format(link_to_acc)
+        + text
+        + "\n"
+        + "date: "
+        + date
+        + "\n"
+        + "link: {}".format(link_to_tweet)
+    )
     for user_id in users_ids:
         chats = db.find_user_chats(user_id)
-        print(chats)
         for chat_id in chats:
             await bot.send_message(chat_id, text)
 
@@ -73,7 +80,7 @@ async def add_acc_to_acc_list(message: types.Message):
 
     text = "Error"
     if message.text.startswith("/add_twitter_acc_"):
-        username = message.text[17:]
+        username = message.text[17:].strip()
         if parser.check_user_exists(username):
             if not db.user_acc_exists(message.from_user.id, username):
                 db.add_usertwitteracc(message.from_user.id, username)

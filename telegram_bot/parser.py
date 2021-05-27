@@ -4,7 +4,6 @@ import json
 import config
 
 
-
 # To set your enviornment variables in your terminal run the following line:
 # export 'BEARER_TOKEN'='AAAAAAAAAAAAAAAAAAAAAOINPwEAAAAA7%2Bakn1LOAXEJh1S9eswS3yoiKwY%3DV4jhcNlzbmpHl3HFK0keLrLAwvwGnaxxeMeQfYJO2mUeRvQsFs'
 
@@ -45,8 +44,9 @@ def delete_all_rules(headers, bearer_token, rules):
         )
     print(json.dumps(response.json()))
 
-def add_rule(headers,acc):
-    payload = {"add": [{"value":"from: " + acc }]}
+
+def add_rule(headers, acc):
+    payload = {"add": [{"value": "from: " + acc}]}
     response = requests.post(
         "https://api.twitter.com/2/tweets/search/stream/rules",
         headers=headers,
@@ -93,7 +93,7 @@ def check_user_exists(username):
 
 async def get_stream(headers, set, bearer_token):
     response = requests.get(
-        "https://api.twitter.com/2/tweets/search/stream?tweet.fields=created_at,text&expansions=author_id&user.fields=created_at,username,entities&media.fields=url",
+        "https://api.twitter.com/2/tweets/search/stream?tweet.fields=created_at,text&expansions=author_id&user.fields=created_at,username",
         headers=headers,
         stream=True,
     )
@@ -110,10 +110,15 @@ async def get_stream(headers, set, bearer_token):
                 if response_line:
                     json_response = json.loads(response_line.decode("utf-8"))
                     data = json_response["data"]
+                    username = json_response["includes"]["users"][0]["username"]
+                    link_to_acc = "https://twitter.com/" + username
+                    link_to_tweet = "https://twitter.com/i/web/status/" + data["id"]
                     await bot.send_to_telegram_bot(
-                        json_response["includes"]["users"][0]["username"],
+                        username,
                         data["text"],
                         data["created_at"],
+                        link_to_acc,
+                        link_to_tweet,
                     )
 
         except:

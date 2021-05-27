@@ -64,7 +64,7 @@ class SQLighter:
     def check_chat_id_exists_in_user_list(self, userId, chatId):
         userChatId = UserChatId(userId, chatId)
         self.cursor.execute(userChatId.check_chat_id())
-        return bool(self.cursor.fetchone()[0])
+        return bool(self.cursor.fetchone())
 
     def delete_chat_id_from_user(self, userId, chatId):
         userChatId = UserChatId(userId, chatId)
@@ -74,7 +74,7 @@ class SQLighter:
     def check_user(self, userid):
         user = User(userid)
         self.cursor.execute(user.check_user_exists())
-        return bool(self.cursor.fetchone()[0])
+        return bool(self.cursor.fetchone())
 
     def get_twiiter_acc(self, userid):
         usernames = (
@@ -98,7 +98,7 @@ class SQLighter:
         user_acc = UserTwitterAcc(user_id, username)
         self.cursor.execute(user_acc.check_user_twitter_acc_exists())
         
-        return bool(self.cursor.fetchone()[0])
+        return bool(self.cursor.fetchone())
         
 
     def find_users_with_this_acc(self, username):
@@ -150,7 +150,7 @@ class UserTwitterAcc:
         )
 
     def check_user_twitter_acc_exists(self):
-        return "SELECT 1 FROM usertwitteracc WHERE userid = %s and username='%s');" % (
+        return "SELECT 1 FROM usertwitteracc WHERE userid = %s and username='%s';" % (
             self.user_id,
             self.twitter_acc,
         )
