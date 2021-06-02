@@ -134,32 +134,40 @@ class Stream:
             headers=headers,
             stream=True,
         ) as stream:
-            for line in stream.iter_lines():
+            while True:
                 try:
-                    json_response = json.loads(line.decode("utf-8"))
-                    print(json_response)
-                    data = json_response["data"]
-                    print(json_response)
-                    username = json_response["includes"]["users"][0]["username"]
-                    link_to_acc = "https://twitter.com/" + username
-                    user_name_text = "<a href='{}'>{}</a>".format(link_to_acc, username)
-                    link_to_tweet = "https://twitter.com/i/web/status/" + data["id"]
-                    asyncio.run(
-                        send_to_telegram_bot(
-                            username,
-                            user_name_text,
-                            data["text"],
-                            data["created_at"],
-                            link_to_tweet,
-                        )
-                    )
-                except JSONDecodeError:
-                    data = None
-                if data:
-                    for callback_key in self._callbacks:
-                        self._callbacks[callback_key](data)
-                if self._stop:
-                    break
+                    for line in stream.iter_lines():
+                        try:
+                            json_response = json.loads(line.decode("utf-8"))
+                            print(json_response)
+                            data = json_response["data"]
+                            print(json_response)
+                            username = json_response["includes"]["users"][0]["username"]
+                            link_to_acc = "https://twitter.com/" + username
+                            user_name_text = "<a href='{}'>{}</a>".format(
+                                link_to_acc, username
+                            )
+                            link_to_tweet = (
+                                "https://twitter.com/i/web/status/" + data["id"]
+                            )
+                            asyncio.run(
+                                send_to_telegram_bot(
+                                    username,
+                                    user_name_text,
+                                    data["text"],
+                                    data["created_at"],
+                                    link_to_tweet,
+                                )
+                            )
+                        except JSONDecodeError:
+                            data = None
+                        if data:
+                            for callback_key in self._callbacks:
+                                self._callbacks[callback_key](data)
+                        if self._stop:
+                            break
+                except:
+                    continue
         print("I am done")
 
     def start_getting_stream(self):
