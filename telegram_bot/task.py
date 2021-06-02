@@ -1,4 +1,3 @@
-from asyncio.tasks import sleep
 import requests
 import json
 import config
@@ -167,7 +166,7 @@ class Stream:
                                 self._callbacks[callback_key](data)
                         if self._stop:
                             break
-                sleep(10 * 5)
+                asyncio.run(asyncio.sleep(10 * 5))
                 continue
             except:
                 continue
