@@ -141,7 +141,6 @@ class Stream:
                             json_response = json.loads(line.decode("utf-8"))
                             print(json_response)
                             data = json_response["data"]
-                            print(json_response)
                             username = json_response["includes"]["users"][0]["username"]
                             link_to_acc = "https://twitter.com/" + username
                             user_name_text = "<a href='{}'>{}</a>".format(
@@ -167,6 +166,7 @@ class Stream:
                         if self._stop:
                             break
                 except:
+                    print("here")
                     continue
         print("I am done")
 
