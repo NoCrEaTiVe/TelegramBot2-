@@ -137,6 +137,7 @@ class Stream:
             for line in stream.iter_lines():
                 try:
                     json_response = json.loads(line.decode("utf-8"))
+                    print(json_response)
                     data = json_response["data"]
                     print(json_response)
                     username = json_response["includes"]["users"][0]["username"]
