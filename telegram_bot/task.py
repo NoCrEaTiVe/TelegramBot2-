@@ -166,7 +166,7 @@ class Stream:
                                 self._callbacks[callback_key](data)
                         if self._stop:
                             break
-                asyncio.run(asyncio.sleep(10 * 5))
+
                 continue
             except:
                 continue
