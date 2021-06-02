@@ -129,18 +129,19 @@ class Stream:
         from bot import send_to_telegram_bot
 
         headers = self.create_headers()
-        with requests.get(
-            "https://api.twitter.com/2/tweets/search/stream?tweet.fields=created_at,text&expansions=author_id&user.fields=created_at,username",
-            headers=headers,
-            stream=True,
-        ) as stream:
-            while True:
-                try:
+        while True:
+            try:
+                with requests.get(
+                    "https://api.twitter.com/2/tweets/search/stream?tweet.fields=created_at,text&expansions=author_id&user.fields=created_at,username",
+                    headers=headers,
+                    stream=True,
+                ) as stream:
                     for line in stream.iter_lines():
                         try:
                             json_response = json.loads(line.decode("utf-8"))
                             print(json_response)
                             data = json_response["data"]
+                            print(json_response)
                             username = json_response["includes"]["users"][0]["username"]
                             link_to_acc = "https://twitter.com/" + username
                             user_name_text = "<a href='{}'>{}</a>".format(
@@ -165,10 +166,9 @@ class Stream:
                                 self._callbacks[callback_key](data)
                         if self._stop:
                             break
-                except:
-                    print("here")
-                    continue
-        print("I am done")
+                print("I am done")
+            except:
+                continue
 
     def start_getting_stream(self):
         with self._lock:
