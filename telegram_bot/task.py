@@ -166,7 +166,7 @@ class Stream:
                                 self._callbacks[callback_key](data)
                         if self._stop:
                             break
-                print("I am done")
+                continue
             except:
                 continue
 
