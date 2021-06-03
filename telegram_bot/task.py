@@ -145,7 +145,9 @@ class Stream:
                                 and json_response["title"] == "ConnectionException"
                             ):
                                 asyncio.sleep(20 * 60)
-                                continue
+                                print("dastan")
+                                break
+
                             data = json_response["data"]
                             username = json_response["includes"]["users"][0]["username"]
                             link_to_acc = "https://twitter.com/" + username
