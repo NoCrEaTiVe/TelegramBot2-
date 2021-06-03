@@ -4,6 +4,7 @@ import config
 import asyncio
 from json import JSONDecodeError
 from threading import Lock, Thread
+import time
 
 
 class Stream:
@@ -144,7 +145,7 @@ class Stream:
                                 "title" in json_response
                                 and json_response["title"] == "ConnectionException"
                             ):
-                                asyncio.sleep(20 * 60)
+                                time.sleep(15 * 60)
                                 print("dastan")
                                 break
 
