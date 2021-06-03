@@ -130,6 +130,7 @@ class Stream:
         from bot import send_to_telegram_bot
 
         headers = self.create_headers()
+        checker = False
         while True:
             try:
                 with requests.get(
@@ -137,6 +138,9 @@ class Stream:
                     headers=headers,
                     stream=True,
                 ) as stream:
+                    if checker:
+                        checker = False
+                        continue
                     for line in stream.iter_lines():
                         try:
                             json_response = json.loads(line.decode("utf-8"))
@@ -145,8 +149,8 @@ class Stream:
                                 "title" in json_response
                                 and json_response["title"] == "ConnectionException"
                             ):
-                                time.sleep(15 * 60)
-                                print("dastan")
+                                time.sleep(20 * 60)
+                                checker = True
                                 break
 
                             data = json_response["data"]
