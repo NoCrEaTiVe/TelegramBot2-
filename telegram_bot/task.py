@@ -141,6 +141,7 @@ class Stream:
                 ) as stream:
                     if checker:
                         checker = False
+                        stream.close()
                         continue
 
                     for line in stream.iter_lines():
@@ -151,8 +152,9 @@ class Stream:
                                 "title" in json_response
                                 and json_response["title"] == "ConnectionException"
                             ):
-                                time.sleep(20 * 60)
+                                time.sleep(15 * 60)
                                 checker = True
+                                stream.close()
                                 break
 
                             data = json_response["data"]
@@ -182,6 +184,7 @@ class Stream:
                             break
                     if checker:
                         checker = False
+                        stream.close()
                         continue
                 continue
             except:
