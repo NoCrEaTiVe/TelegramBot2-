@@ -133,6 +133,7 @@ class Stream:
         checker = False
         while True:
             try:
+                print("here")
                 with requests.get(
                     "https://api.twitter.com/2/tweets/search/stream?tweet.fields=created_at,text&expansions=author_id&user.fields=created_at,username",
                     headers=headers,
@@ -141,6 +142,7 @@ class Stream:
                     if checker:
                         checker = False
                         continue
+
                     for line in stream.iter_lines():
                         try:
                             json_response = json.loads(line.decode("utf-8"))
@@ -178,7 +180,9 @@ class Stream:
                                 self._callbacks[callback_key](data)
                         if self._stop:
                             break
-
+                    if checker:
+                        checker = False
+                        continue
                 continue
             except:
                 continue
