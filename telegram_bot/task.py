@@ -114,8 +114,8 @@ class Stream:
             headers=headers,
         )
         if "errors" in resp.json():
-            return False
-        return True
+            return (False,-1)
+        return (True,resp.json()['data']['id'])
 
     def add_callback(self, name, callback):
         self._callbacks[name] = callback

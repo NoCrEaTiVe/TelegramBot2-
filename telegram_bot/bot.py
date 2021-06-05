@@ -1,3 +1,4 @@
+from asyncio.tasks import sleep
 import logging
 import requests
 from aiogram import Bot, Dispatcher, executor, types
@@ -14,7 +15,6 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher(bot)
 db = SQLighter()
-stream = Stream(config.BEARER_TOKEN)
 
 
 @dp.message_handler(commands=["subscribe"])
@@ -72,6 +72,7 @@ async def send_to_telegram_bot(username, twitter_acc, text, date, link_to_tweet)
 
             if loop and loop.is_running():
                 print("Async event loop already running")
+                await asyncio.sleep(10)
                 await bot.send_message(chat_id, text, parse_mode="html")
             else:
                 print("Starting new event loop")
@@ -83,11 +84,16 @@ async def send_to_telegram_bot(username, twitter_acc, text, date, link_to_tweet)
 )
 async def add_acc_to_list(message: types.Message):
     username = message.text[17:].strip()
-    if stream.check_user_exists(username):
+    from task1 import TwitterParser
+
+    parser = TwitterParser(config.BEARER_TOKEN)
+    checker = parser.check_user_exists(username)
+    print(checker)
+    if checker[0]:
         if not db.user_acc_exists(message.from_user.id, username):
-            db.add_usertwitteracc(message.from_user.id, username)
+            db.add_usertwitteracc(message.from_user.id, username, checker[1])
             text = "User Added " + username
-            stream.add_rule(username)
+
         else:
             text = "User exists in your list"
     else:
@@ -127,12 +133,20 @@ async def del_acc_from_list(message: types.Message):
     acc = message.text[9:]
     if db.user_acc_exists(message.from_user.id, acc):
         db.delete_usertwitter_acc(message.from_user.id, acc)
-        rules = stream.get_rules()
-        stream.delete_all_rules(rules)
-        stream.set_rules()
+
+
+async def scheduled(wait_for):
+    from task1 import TwitterParser
+
+    parser = TwitterParser(config.BEARER_TOKEN)
+    while True:
+        await parser.run()
+        await asyncio.sleep(wait_for)
+       
 
 
 if __name__ == "__main__":
-    p = Process(target=main)
-    p.start()
+    loop = asyncio.get_event_loop()
+    loop.create_task(scheduled(30 * 60))
+
     executor.start_polling(dp, skip_updates=True)

@@ -88,13 +88,13 @@ class SQLighter:
         self.cursor.execute(user.delete_user())
         self.connection.commit()
 
-    def add_usertwitteracc(self, user_id, username):
-        user_twitter_acc = UserTwitterAcc(user_id, username)
+    def add_usertwitteracc(self, user_id, username, twitter_id):
+        user_twitter_acc = UserTwitterAcc(user_id, username, twitter_id)
         self.cursor.execute(user_twitter_acc.add_user_twiiter_acc())
         self.connection.commit()
 
     def user_acc_exists(self, user_id, username):
-        user_acc = UserTwitterAcc(user_id, username)
+        user_acc = UserTwitterAcc(user_id, username, 1)
         self.cursor.execute(user_acc.check_user_twitter_acc_exists())
 
         return bool(self.cursor.fetchone())
@@ -116,13 +116,13 @@ class SQLighter:
         return chat_id
 
     def all_twitter_accs(self):
-        sql = "SELECT DISTINCT username from usertwitteracc"
+        sql = "SELECT DISTINCT twitter_id from usertwitteracc"
         self.cursor.execute(sql)
         accs = [acc[0] for acc in self.cursor]
         return accs
 
     def delete_usertwitter_acc(self, user_id, acc):
-        user_twitter_acc = UserTwitterAcc(user_id, acc)
+        user_twitter_acc = UserTwitterAcc(user_id, acc, 1)
         self.cursor.execute(user_twitter_acc.delete_user_twitter_acc())
         self.connection.commit()
 
@@ -131,14 +131,15 @@ class SQLighter:
 
 
 class UserTwitterAcc:
-    def __init__(self, user_id, acc_username):
+    def __init__(self, user_id, acc_username, twitter_id):
         self.user_id = user_id
         self.twitter_acc = acc_username
+        self.twitter_id = twitter_id
 
     def add_user_twiiter_acc(self):
-        return "INSERT INTO usertwitteracc (userid,username) VALUES (%s, '%s');" % (
-            self.user_id,
-            self.twitter_acc,
+        return (
+            "INSERT INTO usertwitteracc (userid,username,twitter_id) VALUES (%s, '%s',%s);"
+            % (self.user_id, self.twitter_acc, self.twitter_id)
         )
 
     def delete_user_twitter_acc(self):
