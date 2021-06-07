@@ -1,111 +1,12 @@
 import requests
-import json
-import config
-import asyncio
-from json import JSONDecodeError
-from threading import Lock, Thread
-import time
+import datetime
 
 
-class Stream:
+
+
+class TwitterParser:
     def __init__(self, bearer_token):
         self.bearer_token = bearer_token
-        self._callbacks = dict()
-        self._lock = Lock()
-        self._stop = True
-        self._thread = None
-
-    def create_headers(self):
-        headers = {
-            "Authorization": "Bearer {}".format(self.bearer_token),
-            "Content-type": "application/json",
-        }
-        return headers
-
-    def add_rule(self, query, tag):
-        headers = self.create_headers()
-        data = json.dumps({"add": [{"value": query, "tag": tag}]})
-
-        response = requests.post(
-            "https://api.twitter.com/2/tweets/search/stream/rules",
-            headers=headers,
-            data=data,
-        )
-        return json.loads(response.content.decode())
-
-    def get_rules(self):
-        headers = self.create_headers()
-        response = requests.get(
-            "https://api.twitter.com/2/tweets/search/stream/rules", headers=headers
-        )
-        return json.loads(response.content.decode())
-
-    def delete_all_rules(self, rules):
-        headers = self.create_headers()
-        if rules is None or "data" not in rules:
-            return None
-
-        ids = list(map(lambda rule: rule["id"], rules["data"]))
-        payload = {"delete": {"ids": ids}}
-        response = requests.post(
-            "https://api.twitter.com/2/tweets/search/stream/rules",
-            headers=headers,
-            json=payload,
-        )
-        if response.status_code != 200:
-            raise Exception(
-                "Cannot delete rules (HTTP {}): {}".format(
-                    response.status_code, response.text
-                )
-            )
-
-    def add_rule(self, acc):
-        headers = self.create_headers()
-        payload = {"add": [{"value": "from: " + acc}]}
-        response = requests.post(
-            "https://api.twitter.com/2/tweets/search/stream/rules",
-            headers=headers,
-            json=payload,
-        )
-        if response.status_code != 201:
-            raise Exception(
-                "Cannot add rules (HTTP {}): {}".format(
-                    response.status_code, response.text
-                )
-            )
-
-    def delete_rules(self, ids):
-        headers = self.create_headers()
-        data = json.dumps({"delete": {"ids": ids}})
-        response = requests.post(
-            "https://api.twitter.com/2/tweets/search/stream/rules",
-            headers=headers,
-            data=data,
-        )
-        return json.loads(response.content.decode())
-
-    def set_rules(self):
-        headers = self.create_headers()
-        from sqliter import SQLighter
-
-        db = SQLighter()
-        accs = db.all_twitter_accs()
-        sample_rules = []
-        for acc in accs:
-            sample_rules.append({"value": "from: " + acc})
-
-        payload = {"add": sample_rules}
-        response = requests.post(
-            "https://api.twitter.com/2/tweets/search/stream/rules",
-            headers=headers,
-            json=payload,
-        )
-        if response.status_code != 201:
-            raise Exception(
-                "Cannot add rules (HTTP {}): {}".format(
-                    response.status_code, response.text
-                )
-            )
 
     def check_user_exists(self, username):
         headers = self.create_headers()
@@ -114,105 +15,65 @@ class Stream:
             headers=headers,
         )
         if "errors" in resp.json():
-            return (False,-1)
-        return (True,resp.json()['data']['id'])
+            return (False, -1)
+        return (True, resp.json()["data"]["id"])
 
-    def add_callback(self, name, callback):
-        self._callbacks[name] = callback
+    def get_params(self):
+        local_time = str(datetime.datetime.utcnow() - datetime.timedelta(minutes=30))
+        ind = local_time.rindex(".")
+        local_time = local_time[:ind].replace(" ", "T") + "Z"
 
-    def get_callbacks(self):
-        return list(self._callbacks.items())
+        return {
+            "start_time": local_time,
+            "tweet.fields": "created_at",
+            "user.fields": "username",
+            "expansions": "author_id",
+        }
 
-    def delete_callback(self, name):
-        del self._callbacks[name]
+    def create_headers(self):
+        headers = {"Authorization": "Bearer {}".format(self.bearer_token)}
+        return headers
 
-    def _get_stream(self):
+    def get_acc_user_ids(self):
+        from sqliter import SQLighter
+
+        db = SQLighter()
+        accs = db.all_twitter_accs()
+        return accs
+
+    async def connect_to_endpoint(self):
+        headers = self.create_headers()
+        params = self.get_params()
+        accs = self.get_acc_user_ids()
+
         from bot import send_to_telegram_bot
 
-        headers = self.create_headers()
-        checker = False
-        while True:
-            try:
-                print("here")
-                with requests.get(
-                    "https://api.twitter.com/2/tweets/search/stream?tweet.fields=created_at,text&expansions=author_id&user.fields=created_at,username",
-                    headers=headers,
-                    stream=True,
-                ) as stream:
-                    if checker:
-                        checker = False
-                        stream.close()
-                        continue
+        for user_id in accs:
+            url = "https://api.twitter.com/2/users/{}/tweets".format(user_id)
 
-                    for line in stream.iter_lines():
-                        try:
-                            json_response = json.loads(line.decode("utf-8"))
-                            print(json_response)
-                            if (
-                                "title" in json_response
-                                and json_response["title"] == "ConnectionException"
-                            ):
-                                time.sleep(15 * 60)
-                                checker = True
-                                stream.close()
-                                break
+            response = requests.get(url, headers=headers, params=params)
+            json_response = response.json()
+            print(json_response)
+            if json_response["meta"]["result_count"] == 0:
+                url = "https://api.twitter.com/2/users/{}/tweets".format(user_id)
+                response = requests.get(url, headers=headers, params=params)
+                json_response = response.json()
+                if json_response["meta"]["result_count"] == 0:
+                    continue
 
-                            data = json_response["data"]
-                            username = json_response["includes"]["users"][0]["username"]
-                            link_to_acc = "https://twitter.com/" + username
-                            user_name_text = "<a href='{}'>{}</a>".format(
-                                link_to_acc, username
-                            )
-                            link_to_tweet = (
-                                "https://twitter.com/i/web/status/" + data["id"]
-                            )
-                            asyncio.run(
-                                send_to_telegram_bot(
-                                    username,
-                                    user_name_text,
-                                    data["text"],
-                                    data["created_at"],
-                                    link_to_tweet,
-                                )
-                            )
-                        except JSONDecodeError:
-                            data = None
-                        if data:
-                            for callback_key in self._callbacks:
-                                self._callbacks[callback_key](data)
-                        if self._stop:
-                            break
-                    if checker:
-                        checker = False
-                        stream.close()
-                        continue
-                continue
-            except:
-                continue
+            data = json_response["data"]
+            username = json_response["includes"]["users"][0]["username"]
+            link_to_acc = "https://twitter.com/" + username
+            user_name_text = "<a href='{}'>{}</a>".format(link_to_acc, username)
+            for dt in data:
+                link_to_tweet = "https://twitter.com/i/web/status/" + dt["id"]
+                await send_to_telegram_bot(
+                    username,
+                    user_name_text,
+                    dt["text"],
+                    dt["created_at"],
+                    link_to_tweet,
+                )
 
-    def start_getting_stream(self):
-        with self._lock:
-            if self._thread is None:
-                self._stop = False
-                self._thread = Thread(target=self._get_stream)
-                self._thread.start()
-
-    def is_getting_stream(self):
-        with self._lock:
-            return self._thread is not None
-
-    def stop_getting_stream(self):
-        with self._lock:
-            if self._thread is not None:
-                self._stop = True
-        if self._thread:
-            self._thread.join()
-            self._thread = None
-
-
-def main():
-    stream = Stream(config.BEARER_TOKEN)
-    rules = stream.get_rules()
-    stream.delete_all_rules(rules)
-    stream.set_rules()
-    stream.start_getting_stream()
+    async def run(self):
+        await self.connect_to_endpoint()

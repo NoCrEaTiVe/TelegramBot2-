@@ -1,12 +1,12 @@
-from asyncio.tasks import sleep
+
 import logging
 import requests
 from aiogram import Bot, Dispatcher, executor, types
 from sqliter import SQLighter
-from multiprocessing import Process
+
 import config
 import asyncio
-from task import Stream, main
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -84,7 +84,7 @@ async def send_to_telegram_bot(username, twitter_acc, text, date, link_to_tweet)
 )
 async def add_acc_to_list(message: types.Message):
     username = message.text[17:].strip()
-    from task1 import TwitterParser
+    from task import TwitterParser
 
     parser = TwitterParser(config.BEARER_TOKEN)
     checker = parser.check_user_exists(username)
@@ -136,7 +136,7 @@ async def del_acc_from_list(message: types.Message):
 
 
 async def scheduled(wait_for):
-    from task1 import TwitterParser
+    from task import TwitterParser
 
     parser = TwitterParser(config.BEARER_TOKEN)
     while True:
