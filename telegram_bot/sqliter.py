@@ -1,7 +1,5 @@
-import os
 import psycopg2
-
-DATABASE_URL = os.environ["DATABASE_URL"]
+import config
 
 
 class User:
@@ -44,7 +42,7 @@ class UserChatId:
 
 class SQLighter:
     def __init__(self):
-        self.connection = psycopg2.connect(DATABASE_URL, sslmode="require")
+        self.connection = psycopg2.connect(config.DATABASE_URL, sslmode="require")
         self.cursor = self.connection.cursor()
 
     def add_user(self, userId):
